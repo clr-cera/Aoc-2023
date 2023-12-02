@@ -1,5 +1,5 @@
 use std::io;
-const DEBUG: bool = true;
+const DEBUG: bool = false;
 
 // This enum represents each spelled number possibility
 enum Spelled{
