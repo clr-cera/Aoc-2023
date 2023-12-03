@@ -3,5 +3,9 @@
 version = 3
 
 [[package]]
-name = "games"
+name = "gears"
+version = "0.1.0"
+
+[[package]]
+name = "parts_sum"
 version = "0.1.0"
