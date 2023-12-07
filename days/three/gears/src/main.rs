@@ -1,47 +1,17 @@
 use std::io;
 
+const DEBUG: bool = false;
 
 
 fn main() {
     let matrix = create_matrix();
     let mut sum = 0;
-    for number in get_numbers(&matrix) {
-        println!("{number}");
+    for number in get_gears(&matrix) {
+        if DEBUG{println!("{number}")};
+
         sum += number;
     }
     println!("{sum}");
-}
-
-fn get_numbers(matrix: &Vec<Vec<char>>) -> Vec<u64>{
-    let mut vector: Vec<u64> = Vec::new();
-    for i in 0..matrix.len(){
-        let mut is_part: bool = false;
-        let mut num_chars: String = String::new();
-
-        for j in 0..matrix[i].len(){
-            let possible: Result<u64, _> = matrix[i][j].to_string().parse();
-            match possible {
-                Err(_) => {
-                    if is_part {
-                        vector.push(num_chars.parse().expect("how did a char enter here?"));
-                    }
-                    num_chars.clear();
-                    is_part = false;
-                },
-
-                Ok(_) => {
-                    num_chars.push(matrix[i][j]);
-                    if is_connected(matrix, i, j) {
-                        is_part = true;
-                    }
-                },
-
-            }
-
-        }
-    }
-    
-    return vector;
 }
 
 fn create_matrix() -> Vec<Vec<char>>{
@@ -61,27 +31,88 @@ fn create_matrix() -> Vec<Vec<char>>{
     return matrix;
 }
 
-fn is_connected(matrix: &Vec<Vec<char>>, i: usize, j:usize) -> bool {
-    let mut nearby = String::new();
-    let mut returnal = false;
+fn get_gears(matrix: &Vec<Vec<char>>) -> Vec<u64>{
+    let mut vector: Vec<u64> = Vec::new();
     
-    for m in i as isize-1..=i as isize+1 {
-        for n in j as isize-1..=j as isize+1 {
-            if m < matrix.len() as isize && m > 0 {
-                if n < matrix[m as usize].len() as isize && n > 0 {
-                    nearby.push(matrix[m as usize][n as usize]);
+    for i in 0..matrix.len(){
+        for j in 0..matrix[i].len() {
+            if matrix[i][j] == '*'{
+                vector.push(gear_ratio(matrix,i,j));
+            } 
+        }
+    }
+
+    return vector;
+}
+
+fn gear_ratio(matrix: &Vec<Vec<char>>, i: usize, j: usize) -> u64{
+    let mut ratio: u64 = 1;
+    let mut count: u16 = 0;
+    let mut same_number = false;
+    let i = i as isize;
+    let j = j as isize;
+    
+    for m in i-1..=i+1 {
+        for n in j-1..=j+1 {
+            if m >= 0 && m < matrix.len() as isize {
+                if n >= 0 && n < matrix[m as usize].len() as isize {
+                    if n == j-1 {same_number = false;}
+                    let possible: Result<u64, _> = matrix[m as usize][n as usize].to_string().parse(); 
+                    match possible {
+                        Err(_) => same_number = false,
+
+                        Ok(_) => {
+                            if same_number == false {
+                                count+=1;
+                                ratio *= get_number(matrix, m, n);
+                                same_number = true;
+                            }
+                        }
+                    }
                 }
             }
         }
     }
-    for c in nearby.chars() {
-        if !("1234567890.\n".contains(c)) {
-            returnal = true;
-            break;
+
+    if count == 2 {return ratio;}
+    else {return 0}
+}
+
+fn get_number(matrix: &Vec<Vec<char>>, i: isize, j: isize) -> u64 {
+    let mut spelled_number = String::new();
+    let line = &(matrix[i as usize]);
+
+    spelled_number.push(line[j as usize]);
+
+    // Get left
+    let mut index = j-1;
+    loop {
+        if index < 0 {break}
+        let possible: Result<u64, _> = line[index as usize].to_string().parse();
+        match possible {
+            Err(_) => break,
+            Ok(_) => {
+                spelled_number.insert(0, line[index as usize]);
+                index -=1
+            }
         }
     }
     
-    return returnal;
+    // Get right
+    let mut index = j+1; 
+    loop {
+        if index >= line.len() as isize {break}
+        let possible: Result<u64, _> = line[index as usize].to_string().parse();
+        match possible {
+            Err(_) => break,
+            Ok(_) => {
+                spelled_number.push(line[index as usize]);
+                index +=1
+            }
+        }
+    }
+
+    return spelled_number.parse().expect("Somehow this ended up not being a number!");
 }
 
 fn read_string() -> Option<String> {
